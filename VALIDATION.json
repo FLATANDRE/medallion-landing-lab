@@ -1,0 +1,32 @@
+{
+  "generated_at": "2026-10-07T21:09:17.299772Z",
+  "checks": {
+    "python_syntax": "passed",
+    "compose_yaml": "passed",
+    "sample_files": "passed",
+    "zip_integrity": "passed"
+  },
+  "services": [
+    "airflow-init",
+    "airflow-scheduler",
+    "airflow-webserver",
+    "minio",
+    "minio-client",
+    "minio-init",
+    "postgres",
+    "rest",
+    "trino"
+  ],
+  "expected": {
+    "landing_objects": 3,
+    "bronze_rows": 7,
+    "documents": 2,
+    "silver_orders": 4,
+    "quarantine": 2,
+    "document_orders": 2,
+    "unified_orders": 6,
+    "gold_dates": 3,
+    "approved_total": "960.40"
+  },
+  "docker_runtime_executed": false
+}

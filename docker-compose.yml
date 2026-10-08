@@ -1,0 +1,177 @@
+name: medallion-landing-lab
+
+x-airflow-common: &airflow-common
+  build:
+    context: .
+    dockerfile: docker/airflow/Dockerfile
+  env_file: .env
+  environment: &airflow-env
+    AIRFLOW__CORE__EXECUTOR: LocalExecutor
+    AIRFLOW__CORE__LOAD_EXAMPLES: "false"
+    AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: "false"
+    AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://${POSTGRES_USER:-airflow}:${POSTGRES_PASSWORD:-airflow}@postgres:5432/${POSTGRES_DB:-airflow}
+    AIRFLOW__WEBSERVER__SECRET_KEY: medallion-lab-secret
+    AWS_ACCESS_KEY_ID: ${MINIO_ROOT_USER:-labadmin}
+    AWS_SECRET_ACCESS_KEY: ${MINIO_ROOT_PASSWORD:-labpassword123}
+    AWS_REGION: us-east-1
+    MINIO_ENDPOINT: http://minio:9000
+    MINIO_BUCKET: lakehouse
+    SPARK_CONF_DIR: /opt/spark/conf
+    PYTHONPATH: /opt/airflow/jobs
+  user: "${AIRFLOW_UID:-50000}:0"
+  volumes:
+    - ./dags:/opt/airflow/dags:ro
+    - ./jobs:/opt/airflow/jobs:ro
+    - ./config/spark:/opt/spark/conf:ro
+    - airflow-logs:/opt/airflow/logs
+  depends_on:
+    postgres:
+      condition: service_healthy
+    rest:
+      condition: service_started
+
+services:
+  postgres:
+    image: postgres:16.8-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-airflow}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-airflow}
+      POSTGRES_DB: ${POSTGRES_DB:-airflow}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-airflow}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+  minio:
+    #image: quay.io/minio/minio:RELEASE.2025-04-22T22-12-26Z
+    image: pgsty/minio:RELEASE.2026-08-04T00-00-00Z
+    command: server /data --console-address :9001
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-labadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-labpassword123}
+    ports:
+      - "127.0.0.1:9000:9000"
+      - "127.0.0.1:9001:9001"
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+    volumes:
+      - minio-data:/data
+
+  minio-init:
+    #image: quay.io/minio/mc:RELEASE.2025-04-16T18-13-26Z
+    image: pgsty/mc:RELEASE.2026-08-04T00-00-00Z
+    depends_on:
+      minio:
+        condition: service_healthy
+    env_file: .env
+    volumes:
+      - ./seed:/seed:ro
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        mc alias set lab http://minio:9000 "$${MINIO_ROOT_USER}" "$${MINIO_ROOT_PASSWORD}"
+        mc mb --ignore-existing lab/lakehouse
+        mc cp --recursive /seed/structured/ lab/lakehouse/landing/structured/
+        mc cp --recursive /seed/unstructured/ lab/lakehouse/landing/unstructured/
+        mc ls --recursive lab/lakehouse/landing/
+
+  minio-client:
+    #image: quay.io/minio/mc:RELEASE.2025-04-16T18-13-26Z
+    image: pgsty/mc:RELEASE.2026-08-04T00-00-00Z
+    depends_on:
+      minio:
+        condition: service_healthy
+    env_file: .env
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        mc alias set lab http://minio:9000 "$${MINIO_ROOT_USER}" "$${MINIO_ROOT_PASSWORD}"
+        tail -f /dev/null
+
+  rest:
+    image: apache/iceberg-rest-fixture:latest
+    depends_on:
+      minio:
+        condition: service_healthy
+    environment:
+      AWS_ACCESS_KEY_ID: ${MINIO_ROOT_USER:-labadmin}
+      AWS_SECRET_ACCESS_KEY: ${MINIO_ROOT_PASSWORD:-labpassword123}
+      AWS_REGION: us-east-1
+      CATALOG_WAREHOUSE: s3://lakehouse/warehouse/
+      CATALOG_IO__IMPL: org.apache.iceberg.aws.s3.S3FileIO
+      CATALOG_S3_ENDPOINT: http://minio:9000
+      CATALOG_S3_PATH__STYLE__ACCESS: "true"
+    ports:
+      - "127.0.0.1:8181:8181"
+
+  trino:
+    image: trinodb/trino:483
+    environment:
+      AWS_ACCESS_KEY_ID: ${MINIO_ROOT_USER:-labadmin}
+      AWS_SECRET_ACCESS_KEY: ${MINIO_ROOT_PASSWORD:-labpassword123}
+    depends_on:
+      rest:
+        condition: service_started
+      minio:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:8081:8080"
+    volumes:
+      - ./config/trino:/etc/trino:ro
+      - ./sql:/lab/sql:ro
+      - trino-data:/data/trino
+
+  airflow-init:
+    <<: *airflow-common
+    entrypoint: ["/bin/bash", "-c"]
+    command:
+      - |
+        airflow db migrate
+        airflow users create           --username "$${AIRFLOW_ADMIN_USER}"           --password "$${AIRFLOW_ADMIN_PASSWORD}"           --firstname Admin --lastname Lab           --role Admin --email "$${AIRFLOW_ADMIN_EMAIL}" || true
+        airflow connections delete spark_default || true
+        airflow connections add spark_default           --conn-type spark --conn-host local
+    environment:
+      <<: *airflow-env
+      AIRFLOW_ADMIN_USER: ${AIRFLOW_ADMIN_USER:-admin}
+      AIRFLOW_ADMIN_PASSWORD: ${AIRFLOW_ADMIN_PASSWORD:-adminlab123}
+      AIRFLOW_ADMIN_EMAIL: ${AIRFLOW_ADMIN_EMAIL:-admin@example.local}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      minio-init:
+        condition: service_completed_successfully
+      rest:
+        condition: service_started
+
+  airflow-webserver:
+    <<: *airflow-common
+    command: webserver
+    ports:
+      - "127.0.0.1:8080:8080"
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://localhost:8080/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+    depends_on:
+      airflow-init:
+        condition: service_completed_successfully
+
+  airflow-scheduler:
+    <<: *airflow-common
+    command: scheduler
+    depends_on:
+      airflow-init:
+        condition: service_completed_successfully
+
+volumes:
+  postgres-data:
+  minio-data:
+  trino-data:
+  airflow-logs:

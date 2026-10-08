@@ -1,0 +1,182 @@
+[
+  {
+    "file": ".env.example",
+    "bytes": 246,
+    "sha256": "263b92fb7124fc5cec8189ee5821a8ce806444973fa0e8d659b0902a78c8cb42"
+  },
+  {
+    "file": ".gitignore",
+    "bytes": 30,
+    "sha256": "076ea302ffddb666a413b31c887e39fde9e04d3846aa5b72268479baa606fb61"
+  },
+  {
+    "file": "Makefile",
+    "bytes": 323,
+    "sha256": "f59d189875f64d60b8689df5d0662506316fc08f72698ac904a635aab8d42253"
+  },
+  {
+    "file": "README.md",
+    "bytes": 2956,
+    "sha256": "14b70a04d406c2dc909c35cfecb5ed76370f7ab5e479e2e6f4128f74d2c67370"
+  },
+  {
+    "file": "VALIDATION.json",
+    "bytes": 647,
+    "sha256": "5406ed5d15447ff2a88915195f22a22069086a2e36cbcfb87f631ba0d0b21864"
+  },
+  {
+    "file": "config/spark/spark-defaults.conf",
+    "bytes": 746,
+    "sha256": "24ba7b706e49023314452335b39fcbf480cbb6e55944870cca1e5ddeeded54ea"
+  },
+  {
+    "file": "config/trino/catalog/lakehouse.properties",
+    "bytes": 415,
+    "sha256": "107f5083cb59fa3644a034fda60d976e1a9ee5a97126910458c5b960eb795de8"
+  },
+  {
+    "file": "config/trino/config.properties",
+    "bytes": 116,
+    "sha256": "c930a02a617d404ffd977edaaa5774acf5669c6ed6dac9eab63bf9c03f5cc533"
+  },
+  {
+    "file": "config/trino/jvm.config",
+    "bytes": 56,
+    "sha256": "906f24a49b11e8403c9d06190c2ec5b09daeb6bab8b23c2b48b2259540acff2c"
+  },
+  {
+    "file": "config/trino/log.properties",
+    "bytes": 14,
+    "sha256": "36c6fd2770d535ac09138d08ff1a59d67225f04cdaea59bfb1a756aa048b585a"
+  },
+  {
+    "file": "config/trino/node.properties",
+    "bytes": 65,
+    "sha256": "eb5aab1216e9a47acd290e1fdcc3e3d40da9f40e0a5b0651506a3b9f84a4e35d"
+  },
+  {
+    "file": "dags/medallion_landing.py",
+    "bytes": 1201,
+    "sha256": "6e0001df12b4d1e7c124dff7911765dc518df1cecfd84922a8b128224e353ef3"
+  },
+  {
+    "file": "docker/airflow/Dockerfile",
+    "bytes": 1073,
+    "sha256": "63fe70b8b4f470e09ff13f126af228841c599b60feff0fdb126c8a47a7636ca4"
+  },
+  {
+    "file": "docker-compose.yml",
+    "bytes": 5358,
+    "sha256": "0cc2da02c684b003d5f4f5e481739fdebb9678b4cba4ee194aa9b924652b5652"
+  },
+  {
+    "file": "docs/ARCHITECTURE.md",
+    "bytes": 1415,
+    "sha256": "50d87cf98814cd2cdc7b8be17281bcf8a2c959c4c7503f0377489f4fa3167bfd"
+  },
+  {
+    "file": "docs/DATA_CONTRACTS.md",
+    "bytes": 1053,
+    "sha256": "9f1b5ff986a30e286b44cda5d902cb477a42038b0d51f8ccada2a5fa0f24954a"
+  },
+  {
+    "file": "docs/TROUBLESHOOTING.md",
+    "bytes": 628,
+    "sha256": "453e94d4bcf0b07be2fd93ded292a8793f94483ac17215984d19f6e8abb3022d"
+  },
+  {
+    "file": "docs/VALIDATION.md",
+    "bytes": 520,
+    "sha256": "290ea6c40dd6bea13b0f0a4decc07cec24fdcad39c1f13905335aa0cd2523eeb"
+  },
+  {
+    "file": "jobs/medallion_pipeline.py",
+    "bytes": 12648,
+    "sha256": "b2528f875e7e2feb866430e812f8a5ebc31d41cb876886dd1f3d4374e0a4c7b8"
+  },
+  {
+    "file": "scripts/doctor.sh",
+    "bytes": 413,
+    "sha256": "01ea61ca4a72c310e0566f5b94bb09b5f0ef84cadac00fef185074cb6d8bde07"
+  },
+  {
+    "file": "scripts/idempotency.sh",
+    "bytes": 162,
+    "sha256": "a72655b94445990371eb8256b2b753ae2fb5f938256353e814378576c5d50624"
+  },
+  {
+    "file": "scripts/query.sh",
+    "bytes": 204,
+    "sha256": "8cfc7761a394aa672b3084b228053f78c6867ec5757617bfa96b7c8f1dd46a9b"
+  },
+  {
+    "file": "scripts/reset.sh",
+    "bytes": 208,
+    "sha256": "a3b27b29ddaa41d3961a14a89a9511bb2de8a774809d2e77eca7f0bac2a98e56"
+  },
+  {
+    "file": "scripts/run-local.sh",
+    "bytes": 183,
+    "sha256": "a9a8aa5d93517ce3f70af02015eb18607ed0ce3d7d4ccb501414861b050bb0a0"
+  },
+  {
+    "file": "scripts/smoke-test.sh",
+    "bytes": 132,
+    "sha256": "f21c9141ca4911b2c6af36bfc021c69a34e5d4fac572f5198937212023062336"
+  },
+  {
+    "file": "scripts/trigger.sh",
+    "bytes": 243,
+    "sha256": "fe1f6e0db6e90ac39900063860a6e23c8fcf503bfa2a8ccfb7daa1d0b16a59a2"
+  },
+  {
+    "file": "scripts/up.sh",
+    "bytes": 261,
+    "sha256": "9fe34950357253adf1a7d23a4aab7dfcc1a01bdf723b55b292690967e746915e"
+  },
+  {
+    "file": "scripts/upload.sh",
+    "bytes": 528,
+    "sha256": "a26b5b1641d42d85239261b2d5e580d66e8ee4ab497a40627b2aeebfb4a4c95d"
+  },
+  {
+    "file": "seed/README.md",
+    "bytes": 334,
+    "sha256": "b927f6973d44f9a58a21ba47a599023681e5fcc7c153ef79e2e67a31f8ca07cd"
+  },
+  {
+    "file": "seed/structured/orders/orders_2026-10-01.csv",
+    "bytes": 447,
+    "sha256": "fa810e260bd2fd29f3471ab0e80e256a2ce5478645bec557ac7416ddee122db0"
+  },
+  {
+    "file": "seed/unstructured/documents/order_1008.pdf",
+    "bytes": 1749,
+    "sha256": "a56a2897fb9f588ae961870133707a27c61ba3ad8b66e3c18af5d97cf3d6ae07"
+  },
+  {
+    "file": "seed/unstructured/images/order_1009.png",
+    "bytes": 46222,
+    "sha256": "46df5d419425c584cd7006b4d18c6bfaacd49962fc4c6d53f4c777f3ddfaa8a4"
+  },
+  {
+    "file": "sql/01_landing_bronze.sql",
+    "bytes": 379,
+    "sha256": "dfd3d1698a4634065143643b9f2865e0d0919d70983abfe944db93093e7cbd1d"
+  },
+  {
+    "file": "sql/02_silver_gold.sql",
+    "bytes": 374,
+    "sha256": "190b6f463a17530884d90e742cf98137494c9b2a6f47709bd900e6892da35514"
+  },
+  {
+    "file": "sql/03_iceberg_metadata.sql",
+    "bytes": 285,
+    "sha256": "aa180e7a394b3ad84ab45bff0bdbc0d7d8b68e3c556c7bc72d52e2e155dd2acc"
+  },
+  {
+    "file": "sql/04_acceptance.sql",
+    "bytes": 945,
+    "sha256": "61eb7e6a45800e16d5b1d42b983c0e572e477c031048be4cfe7cd1882ea09f98"
+  }
+]
