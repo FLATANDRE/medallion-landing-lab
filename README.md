@@ -46,7 +46,10 @@ bash scripts/query.sh 01_landing_bronze.sql
 bash scripts/query.sh 02_silver_gold.sql
 bash scripts/query.sh 03_iceberg_metadata.sql
 bash scripts/query.sh 04_acceptance.sql
+bash scripts/report-html.sh
 ```
+
+O relatório HTML é gerado em [reports/consulta-relatorio.html](/media/andreoliveira/hdd_data1/projetos_canal_youtube/medallion-landing-lab/reports/consulta-relatorio.html), com layout visual para apresentação dos resultados.
 
 ## Dados incluídos
 

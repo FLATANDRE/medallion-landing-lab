@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Relatório de Consultas - Medallion Landing Lab</title>
+  <style>
+    :root {
+      --bg: #0b1020;
+      --surface: #141b34;
+      --surface-2: #1b2447;
+      --text: #e8ecff;
+      --muted: #9da9d8;
+      --accent: #7c9cff;
+      --accent-2: #54d2c0;
+      --ok: #1fa971;
+      --error: #d9536f;
+      --border: #2e3b6f;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Inter", "Segoe UI", Roboto, Arial, sans-serif;
+      background: radial-gradient(circle at top right, #223164 0%, var(--bg) 45%);
+      color: var(--text);
+      line-height: 1.5;
+    }
+    .container {
+      max-width: 1300px;
+      margin: 0 auto;
+      padding: 28px 20px 40px;
+    }
+    .hero {
+      background: linear-gradient(135deg, rgba(124, 156, 255, 0.2), rgba(84, 210, 192, 0.16));
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 20px 24px;
+      margin-bottom: 20px;
+    }
+    .hero h1 {
+      margin: 0 0 8px;
+      font-size: 1.7rem;
+      letter-spacing: 0.2px;
+    }
+    .hero p {
+      margin: 0;
+      color: var(--muted);
+    }
+    .toc {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin: 16px 0 24px;
+    }
+    .toc a {
+      text-decoration: none;
+      color: var(--text);
+      background: rgba(124, 156, 255, 0.16);
+      border: 1px solid rgba(124, 156, 255, 0.35);
+      border-radius: 999px;
+      font-size: 0.84rem;
+      padding: 6px 12px;
+    }
+    .section-card {
+      background: linear-gradient(180deg, rgba(27, 36, 71, 0.95), rgba(20, 27, 52, 0.95));
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      margin-bottom: 18px;
+      overflow: hidden;
+      box-shadow: 0 10px 24px rgba(0, 0, 0, 0.25);
+    }
+    .section-header {
+      padding: 16px 18px 10px;
+      border-bottom: 1px solid rgba(157, 169, 216, 0.2);
+    }
+    .section-header h2 {
+      margin: 0;
+      font-size: 1.1rem;
+    }
+    .section-subtitle {
+      margin: 6px 0 0;
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+    .table-wrap {
+      width: 100%;
+      overflow-x: auto;
+      padding: 12px 14px 16px;
+    }
+    .result-table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 840px;
+    }
+    .result-table th,
+    .result-table td {
+      border: 1px solid rgba(157, 169, 216, 0.24);
+      padding: 8px 10px;
+      vertical-align: top;
+      font-size: 0.9rem;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    .result-table th {
+      background: var(--surface-2);
+      color: #dbe4ff;
+      position: sticky;
+      top: 0;
+      z-index: 1;
+    }
+    .result-table tbody tr:nth-child(odd) {
+      background: rgba(255, 255, 255, 0.02);
+    }
+    .num-cell {
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+    }
+    .bool-cell {
+      text-align: center;
+      font-weight: 600;
+      border-radius: 6px;
+    }
+    .bool-true {
+      color: #d5ffe8;
+      background: rgba(31, 169, 113, 0.28);
+    }
+    .bool-false {
+      color: #ffd9e1;
+      background: rgba(217, 83, 111, 0.3);
+    }
+    .empty-state {
+      margin: 0;
+      padding: 12px 18px 18px;
+      color: var(--muted);
+    }
+    .footer {
+      margin-top: 24px;
+      color: var(--muted);
+      font-size: 0.82rem;
+      text-align: right;
+    }
+  </style>
+</head>
+<body>
+  <main class="container">
+    <section class="hero">
+      <h1>Relatório Executivo de Consultas</h1>
+      <p>Consolidação das consultas da seção "Consultar" (Landing, Bronze, Silver, Gold, metadados Iceberg e validações de aceitação).</p>
+    </section>
+    <nav class="toc">
+      <a href="#kpis-gerais">KPIs gerais</a>
+      <a href="#landing-manifesto">Landing Manifesto</a>
+      <a href="#bronze-orders-raw">Bronze Orders Raw</a>
+      <a href="#bronze-documentos-extraidos">Bronze Documentos Extraídos</a>
+      <a href="#silver-orders-unificados">Silver Orders Unificados</a>
+      <a href="#silver-quarentena">Silver Quarentena</a>
+      <a href="#gold-vendas-diarias">Gold Vendas Diárias</a>
+      <a href="#validacoes-de-aceitacao">Validações de Aceitação</a>
+      <a href="#iceberg-arquivos-da-tabela-gold">Iceberg Arquivos</a>
+      <a href="#iceberg-snapshots">Iceberg Snapshots</a>
+      <a href="#iceberg-history">Iceberg History</a>
+    </nav>
+<section class="section-card" id="kpis-gerais">
+<div class="section-header">
+<h2>KPIs gerais</h2>
+<p class="section-subtitle">Indicadores consolidados da camada Gold</p>
+</div>
+<div class="table-wrap">
+<table class="result-table">
+<thead><tr>
+<th>dias_com_vendas</th>
+<th>pedidos_aprovados_total</th>
+<th>valor_aprovado_total</th>
+<th>ticket_medio_geral</th>
+</tr></thead>
+<tbody>
+<tr>
+<td class="num-cell">3</td>
+<td class="num-cell">5</td>
+<td class="num-cell">960.40</td>
+<td class="num-cell">192.080000</td>
+</tr>
+</tbody></table></div>
+</section>
+<section class="section-card" id="landing-manifesto">
+<div class="section-header">
+<h2>Landing Manifesto</h2>
+<p class="section-subtitle">Arquivos recebidos na Landing Zone e catalogados na Bronze</p>
+</div>
+<div class="table-wrap">
+<table class="result-table">
+<thead><tr>
+<th>object_key</th>
+<th>data_family</th>
+<th>media_type</th>
+<th>object_size</th>
+<th>etag</th>
+</tr></thead>
+<tbody>
+<tr>
+<td>landing/structured/orders/orders_2026-10-01.csv</td>
+<td>structured</td>
+<td>text/csv</td>
+<td class="num-cell">447</td>
+<td>df72fa077c30f368f0651319304f03fb</td>
+</tr>
+<tr>
+<td>landing/unstructured/documents/order_1008.pdf</td>
+<td>unstructured</td>
+<td>application/pdf</td>
+<td class="num-cell">1749</td>
+<td>8ced4c76eeef30131d1c46443ea54742</td>
+</tr>
+<tr>
+<td>landing/unstructured/images/order_1009.png</td>
+<td>unstructured</td>
+<td>image/png</td>
+<td class="num-cell">46222</td>
+<td>4a0500e2408a88f9bac7d1b336850b96</td>
+</tr>
+</tbody></table></div>
+</section>
+<section class="section-card" id="bronze-orders-raw">
+<div class="section-header">
+<h2>Bronze Orders Raw</h2>
+<p class="section-subtitle">Linhas estruturadas brutas, sem tratamento semântico</p>
+</div>
+<div class="table-wrap">
+<table class="result-table">
+<thead><tr>
+<th>source_key</th>
+<th>source_line</th>
+<th>raw_line</th>
+</tr></thead>
+<tbody>
+<tr>
+<td>landing/structured/orders/orders_2026-10-01.csv</td>
+<td class="num-cell">2</td>
+<td>1001,10,2026-10-01,100.00,aprovado,2026-10-01 10:00:00</td>
+</tr>
+<tr>
+<td>landing/structured/orders/orders_2026-10-01.csv</td>
+<td class="num-cell">3</td>
+<td>1001,10,2026-10-01,100.00,aprovado,2026-10-01 10:00:00</td>
+</tr>
+<tr>
+<td>landing/structured/orders/orders_2026-10-01.csv</td>
+<td class="num-cell">4</td>
+<td>1002,20,2026-10-01,250.00, APROVADO ,2026-10-01 11:00:00</td>
+</tr>
+<tr>
+<td>landing/structured/orders/orders_2026-10-01.csv</td>
+<td class="num-cell">5</td>
+<td>1003,30,2026-10-01,-50.00,aprovado,2026-10-01 12:00:00</td>
+</tr>
+<tr>
+<td>landing/structured/orders/orders_2026-10-01.csv</td>
+<td class="num-cell">6</td>
+<td>1004,40,data_invalida,80.00,aprovado,2026-10-01 13:00:00</td>
+</tr>
+<tr>
+<td>landing/structured/orders/orders_2026-10-01.csv</td>
+<td class="num-cell">7</td>
+<td>1005,50,2026-10-02,150.00,cancelado,2026-10-02 09:00:00</td>
+</tr>
+<tr>
+<td>landing/structured/orders/orders_2026-10-01.csv</td>
+<td class="num-cell">8</td>
+<td>1006,60,2026-10-02,200.00,aprovado,2026-10-02 10:00:00</td>
+</tr>
+</tbody></table></div>
+</section>
+<section class="section-card" id="bronze-documentos-extraidos">
+<div class="section-header">
+<h2>Bronze Documentos Extraídos</h2>
+<p class="section-subtitle">Textos extraídos de PDFs e imagens (OCR)</p>
+</div>
+<div class="table-wrap">
+<table class="result-table">
+<thead><tr>
+<th>source_key</th>
+<th>media_type</th>
+<th>extraction_method</th>
+<th>extraction_status</th>
+<th>extracted_text</th>
+</tr></thead>
+<tbody>
+<tr>
+<td>landing/unstructured/documents/order_1008.pdf</td>
+<td>application/pdf</td>
+<td>pypdf</td>
+<td>success</td>
+<td>COMPROVANTE DE PEDIDO
+PEDIDO: 1008
+CLIENTE: 80
+DATA: 2026-10-02
+VALOR: 320.50
+STATUS: APROVADO
+ATUALIZADO: 2026-10-02 15:00:00</td>
+</tr>
+<tr>
+<td>landing/unstructured/images/order_1009.png</td>
+<td>image/png</td>
+<td>tesseract-ocr</td>
+<td>success</td>
+<td>COMPROVANTE DE PEDIDO
+PEDIDO: 1009
+
+CLIENTE: 90
+
+DATA: 2026-10-03
+
+VALOR: 89.90
+
+STATUS: APROVADO
+
+ATUALIZADO: 2026-10-03 14:30:00</td>
+</tr>
+</tbody></table></div>
+</section>
+<section class="section-card" id="silver-orders-unificados">
+<div class="section-header">
+<h2>Silver Orders Unificados</h2>
+<p class="section-subtitle">Pedidos estruturados + pedidos extraídos de documentos, já padronizados</p>
+</div>
+<div class="table-wrap">
+<table class="result-table">
+<thead><tr>
+<th>pedido_id</th>
+<th>cliente_id</th>
+<th>data_pedido</th>
+<th>valor</th>
+<th>status</th>
+<th>source_type</th>
+<th>source_key</th>
+</tr></thead>
+<tbody>
+<tr>
+<td class="num-cell">1001</td>
+<td class="num-cell">10</td>
+<td>2026-10-01</td>
+<td class="num-cell">100.00</td>
+<td>aprovado</td>
+<td>csv</td>
+<td>landing/structured/orders/orders_2026-10-01.csv</td>
+</tr>
+<tr>
+<td class="num-cell">1002</td>
+<td class="num-cell">20</td>
+<td>2026-10-01</td>
+<td class="num-cell">250.00</td>
+<td>aprovado</td>
+<td>csv</td>
+<td>landing/structured/orders/orders_2026-10-01.csv</td>
+</tr>
+<tr>
+<td class="num-cell">1005</td>
+<td class="num-cell">50</td>
+<td>2026-10-02</td>
+<td class="num-cell">150.00</td>
+<td>cancelado</td>
+<td>csv</td>
+<td>landing/structured/orders/orders_2026-10-01.csv</td>
+</tr>
+<tr>
+<td class="num-cell">1006</td>
+<td class="num-cell">60</td>
+<td>2026-10-02</td>
+<td class="num-cell">200.00</td>
+<td>aprovado</td>
+<td>csv</td>
+<td>landing/structured/orders/orders_2026-10-01.csv</td>
+</tr>
+<tr>
+<td class="num-cell">1008</td>
+<td class="num-cell">80</td>
+<td>2026-10-02</td>
+<td class="num-cell">320.50</td>
+<td>aprovado</td>
+<td>document</td>
+<td>landing/unstructured/documents/order_1008.pdf</td>
+</tr>
+<tr>
+<td class="num-cell">1009</td>
+<td class="num-cell">90</td>
+<td>2026-10-03</td>
+<td class="num-cell">89.90</td>
+<td>aprovado</td>
+<td>document</td>
+<td>landing/unstructured/images/order_1009.png</td>
+</tr>
+</tbody></table></div>
+</section>
+<section class="section-card" id="silver-quarentena">
+<div class="section-header">
+<h2>Silver Quarentena</h2>
+<p class="section-subtitle">Registros rejeitados com motivo de erro de qualidade</p>
+</div>
+<div class="table-wrap">
+<table class="result-table">
+<thead><tr>
+<th>source_key</th>
+<th>source_line</th>
+<th>raw_line</th>
+<th>error_reason</th>
+</tr></thead>
+<tbody>
+<tr>
+<td>landing/structured/orders/orders_2026-10-01.csv</td>
+<td class="num-cell">5</td>
+<td>1003,30,2026-10-01,-50.00,aprovado,2026-10-01 12:00:00</td>
+<td>valor inválido</td>
+</tr>
+<tr>
+<td>landing/structured/orders/orders_2026-10-01.csv</td>
+<td class="num-cell">6</td>
+<td>1004,40,data_invalida,80.00,aprovado,2026-10-01 13:00:00</td>
+<td>data inválida</td>
+</tr>
+</tbody></table></div>
+</section>
+<section class="section-card" id="gold-vendas-diarias">
+<div class="section-header">
+<h2>Gold Vendas Diárias</h2>
+<p class="section-subtitle">Métrica final para consumo analítico</p>
+</div>
+<div class="table-wrap">
+<table class="result-table">
+<thead><tr>
+<th>data_pedido</th>
+<th>qtd_pedidos</th>
+<th>valor_aprovado</th>
+<th>ticket_medio</th>
+</tr></thead>
+<tbody>
+<tr>
+<td>2026-10-01</td>
+<td class="num-cell">2</td>
+<td class="num-cell">350.00</td>
+<td class="num-cell">175.00</td>
+</tr>
+<tr>
+<td>2026-10-02</td>
+<td class="num-cell">2</td>
+<td class="num-cell">520.50</td>
+<td class="num-cell">260.25</td>
+</tr>
+<tr>
+<td>2026-10-03</td>
+<td class="num-cell">1</td>
+<td class="num-cell">89.90</td>
+<td class="num-cell">89.90</td>
+</tr>
+</tbody></table></div>
+</section>
+<section class="section-card" id="validacoes-de-aceitacao">
+<div class="section-header">
+<h2>Validações de Aceitação</h2>
+<p class="section-subtitle">Conferência de contagem esperada por camada e soma de valor aprovado</p>
+</div>
+<div class="table-wrap">
+<table class="result-table">
+<thead><tr>
+<th>name</th>
+<th>actual</th>
+<th>expected</th>
+<th>passed</th>
+</tr></thead>
+<tbody>
+<tr>
+<td>bronze_documents</td>
+<td class="num-cell">2</td>
+<td class="num-cell">2</td>
+<td class="bool-cell bool-true status-cell">Aprovado</td>
+</tr>
+<tr>
+<td>bronze_orders</td>
+<td class="num-cell">7</td>
+<td class="num-cell">7</td>
+<td class="bool-cell bool-true status-cell">Aprovado</td>
+</tr>
+<tr>
+<td>document_orders</td>
+<td class="num-cell">2</td>
+<td class="num-cell">2</td>
+<td class="bool-cell bool-true status-cell">Aprovado</td>
+</tr>
+<tr>
+<td>gold_dates</td>
+<td class="num-cell">3</td>
+<td class="num-cell">3</td>
+<td class="bool-cell bool-true status-cell">Aprovado</td>
+</tr>
+<tr>
+<td>landing_manifest</td>
+<td class="num-cell">3</td>
+<td class="num-cell">3</td>
+<td class="bool-cell bool-true status-cell">Aprovado</td>
+</tr>
+<tr>
+<td>quarantine</td>
+<td class="num-cell">2</td>
+<td class="num-cell">2</td>
+<td class="bool-cell bool-true status-cell">Aprovado</td>
+</tr>
+<tr>
+<td>silver_orders</td>
+<td class="num-cell">4</td>
+<td class="num-cell">4</td>
+<td class="bool-cell bool-true status-cell">Aprovado</td>
+</tr>
+<tr>
+<td>unified_orders</td>
+<td class="num-cell">6</td>
+<td class="num-cell">6</td>
+<td class="bool-cell bool-true status-cell">Aprovado</td>
+</tr>
+</tbody></table></div>
+</section>
+<section class="section-card" id="validacao-de-total-aprovado">
+<div class="section-header">
+<h2>Validação de Total Aprovado</h2>
+<p class="section-subtitle">Valor esperado consolidado da Gold (960.40)</p>
+</div>
+<div class="table-wrap">
+<table class="result-table">
+<thead><tr>
+<th>approved_total</th>
+<th>passed</th>
+</tr></thead>
+<tbody>
+<tr>
+<td class="num-cell">960.40</td>
+<td class="bool-cell bool-true status-cell">Aprovado</td>
+</tr>
+</tbody></table></div>
+</section>
+<section class="section-card" id="iceberg-arquivos-da-tabela-gold">
+<div class="section-header">
+<h2>Iceberg Arquivos da tabela Gold</h2>
+<p class="section-subtitle">Detalhes físicos de arquivos Parquet da tabela daily_sales</p>
+</div>
+<div class="table-wrap">
+<table class="result-table">
+<thead><tr>
+<th>file_path</th>
+<th>file_format</th>
+<th>record_count</th>
+</tr></thead>
+<tbody>
+<tr>
+<td>s3://lakehouse/warehouse/gold/daily_sales/data/00000-6-80b76493-f62c-4721-90c5-03dabd5b8239-0-00001.parquet</td>
+<td>PARQUET</td>
+<td class="num-cell">3</td>
+</tr>
+</tbody></table></div>
+</section>
+<section class="section-card" id="iceberg-snapshots">
+<div class="section-header">
+<h2>Iceberg Snapshots</h2>
+<p class="section-subtitle">Snapshots mais recentes e tipo de operação</p>
+</div>
+<div class="table-wrap">
+<table class="result-table">
+<thead><tr>
+<th>committed_at</th>
+<th>snapshot_id</th>
+<th>operation</th>
+</tr></thead>
+<tbody>
+<tr>
+<td>2026-10-09 03:58:18.037 UTC</td>
+<td class="num-cell">2464051455048579906</td>
+<td>overwrite</td>
+</tr>
+<tr>
+<td>2026-10-09 03:41:31.781 UTC</td>
+<td class="num-cell">6500115080525938112</td>
+<td>overwrite</td>
+</tr>
+</tbody></table></div>
+</section>
+<section class="section-card" id="iceberg-history">
+<div class="section-header">
+<h2>Iceberg History</h2>
+<p class="section-subtitle">Histórico de mudanças de snapshot da tabela daily_sales</p>
+</div>
+<div class="table-wrap">
+<table class="result-table">
+<thead><tr>
+<th>made_current_at</th>
+<th>snapshot_id</th>
+<th>parent_id</th>
+<th>is_current_ancestor</th>
+</tr></thead>
+<tbody>
+<tr>
+<td>2026-10-09 03:58:18.037 UTC</td>
+<td class="num-cell">2464051455048579906</td>
+<td></td>
+<td class="bool-cell bool-true">Aprovado</td>
+</tr>
+<tr>
+<td>2026-10-09 03:41:31.781 UTC</td>
+<td class="num-cell">6500115080525938112</td>
+<td></td>
+<td class="bool-cell bool-false">Falhou</td>
+</tr>
+</tbody></table></div>
+</section>
+    <p class="footer">Relatório gerado automaticamente em 2026-10-09 11:46:10 -0300</p>
+  </main>
+</body>
+</html>
